@@ -4,6 +4,8 @@ import {
 } from 'react-bootstrap'
 import Rating from '../components/Rating'
 import { useGetProductDetailQuery } from '../slices/productApiSlice'
+import Loader from '../components/Loader'
+import Message from '../components/Message'
 
 const ProductScreen = () => {
     const { id: productId } = useParams()
@@ -13,9 +15,9 @@ const ProductScreen = () => {
     return (
         <div>
             {isLoading ?
-                <h3>Loading...</h3>
+                <Loader />
                 : error ?
-                    <div>{error.data.message || error.error}</div>
+                    <Message variant='danger'>{error.data.message || error.error}</Message>
                     : <div>
                         <Link className="btn btn-light my-3" to='/'>
                             Go Back
