@@ -2,6 +2,7 @@ import express from 'express'
 const router = express.Router()
 import { createProduct, createProductReview, deleteProduct, getProductById, getProducts, getTopProducts, updateProduct } from '../controller/productController.js'
 import { protect, admin } from '../middleware/authMiddleware.js'
+import checkObjectId from '../middleware/checkObjectId.js'
 
 router.route('/')
     .get(getProducts)
@@ -10,6 +11,7 @@ router.route('/')
 router.get('/top', getTopProducts)
 
 router.route('/:id')
+    .all(checkObjectId)
     .get(getProductById)
     .all(protect, admin)
     .put(updateProduct)
