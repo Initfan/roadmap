@@ -27,6 +27,7 @@ router.route('/profile')
 
 router.route('/:id')
     .all(protect, admin)
+    .get(getUserById)
     .put(updateUsers)
     .delete(deleteUsers)
 
