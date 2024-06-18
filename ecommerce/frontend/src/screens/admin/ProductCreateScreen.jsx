@@ -1,74 +1,51 @@
-import React, { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Form, Button } from 'react-bootstrap'
 import Message from '../../components/Message'
 import Loader from '../../components/Loader'
 import FormContainer from '../../components/FormContainer'
 import { toast } from 'react-toastify'
 import {
-    useGetProductDetailQuery,
-    useUpdateProductMutation,
+    useCreateProductMutation,
     useUploadProductImageMutation
 } from '../../slices/productApiSlice'
+import { useSelector } from 'react-redux'
 
-const ProductEditScreen = () => {
-    const { id: productId } = useParams()
-
+const ProductCreateScreen = () => {
     const navigate = useNavigate()
 
+    const { userInfo } = useSelector(state => state.auth)
+
     const [product, setProduct] = useState({
+        user: userInfo._id,
         name: '',
         price: '',
-        image: '',
+        image: null,
         brand: '',
         category: '',
         countInStock: '',
         description: '',
     })
 
-    const { data, isLoading, error } = useGetProductDetailQuery(productId)
-
-    const [updateProduct, { isLoading: loadingUpdate }] = useUpdateProductMutation();
-
+    const [createProduct, { isLoading, error }] = useCreateProductMutation()
     const [uploadProductImage, { isLoading: loadingUpload }] = useUploadProductImageMutation()
 
-    useEffect(() => {
-        if (data) {
-            setProduct({
-                name: data.name,
-                price: data.price,
-                image: data.image,
-                brand: data.brand,
-                category: data.category,
-                countInStock: data.countInStock,
-                description: data.description,
-            })
-        }
-    }, [data])
+    const uploadImage = async (files) => {
+        const formData = new FormData()
+        formData.append('image', files)
+        const uploadedImage = await uploadProductImage(formData).unwrap()
+        return uploadedImage
+    }
 
     const submitHandler = async (e) => {
         e.preventDefault()
-        const updatedProduct = { ...product, productId };
-
-        const result = await updateProduct(updatedProduct)
-
-        if (result.error) {
-            toast.error(result.error)
-        } else {
-            toast.success('Product updated')
-            navigate('/admin/productlist')
-        }
-    }
-
-    const uploadFileHandler = async (e) => {
-        const formData = new FormData()
-        formData.append('image', e.target.files[0])
-        console.log(e.target.files[0])
 
         try {
-            const res = await uploadProductImage(formData).unwrap()
-            toast.success(res.message)
-            setProduct(prev => ({ ...prev, image: res.image }))
+            const uploadedImage = await uploadImage(product.image)
+            console.log(uploadedImage)
+            await createProduct({ ...product, image: uploadedImage.image })
+            toast.success('Create product successfuly')
+            navigate('/admin/productlist')
         } catch (err) {
             toast.error(err?.data?.message || err.error)
         }
@@ -81,8 +58,8 @@ const ProductEditScreen = () => {
             </Link>
 
             <FormContainer>
-                <h1>Edit Product</h1>
-                {loadingUpdate && <Loader />}
+                <h1>Create Product</h1>
+                {isLoading && <Loader />}
 
                 {isLoading
                     ? <Loader />
@@ -94,7 +71,6 @@ const ProductEditScreen = () => {
                                 <Form.Control
                                     type='name'
                                     placeholder='Enter name'
-                                    value={product.name}
                                     onChange={e => setProduct(prev => ({ ...prev, name: e.target.value }))}
                                 />
                             </Form.Group>
@@ -103,7 +79,6 @@ const ProductEditScreen = () => {
                                 <Form.Control
                                     type='number'
                                     placeholder='Enter price'
-                                    value={product.price}
                                     onChange={e => setProduct(prev => ({ ...prev, price: e.target.value }))}
                                 />
                             </Form.Group>
@@ -111,15 +86,9 @@ const ProductEditScreen = () => {
                             <Form.Group controlId='image' className='my-2'>
                                 <Form.Label>Image</Form.Label>
                                 <Form.Control
-                                    type='text'
-                                    placeholder='Enter image url'
-                                    value={product.image}
-                                    onChange={e => setProduct(prev => ({ ...prev, image: e.target.value }))}
-                                />
-                                <Form.Control
                                     type='file'
                                     label='Choose file'
-                                    onChange={uploadFileHandler}
+                                    onChange={(e) => setProduct(prev => ({ ...prev, image: e.target.files[0] }))}
                                 ></Form.Control>
                             </Form.Group>
                             {loadingUpload && <Loader />}
@@ -129,7 +98,6 @@ const ProductEditScreen = () => {
                                 <Form.Control
                                     type='text'
                                     placeholder='Enter brand'
-                                    value={product.brand}
                                     onChange={e => setProduct(prev => ({ ...prev, brand: e.target.value }))}
                                 />
                             </Form.Group>
@@ -138,7 +106,6 @@ const ProductEditScreen = () => {
                                 <Form.Control
                                     type='number'
                                     placeholder='Enter count in stock'
-                                    value={product.countInStock}
                                     onChange={e => setProduct(prev => ({ ...prev, countInStock: e.target.value }))}
                                 />
                             </Form.Group>
@@ -147,7 +114,6 @@ const ProductEditScreen = () => {
                                 <Form.Control
                                     type='text'
                                     placeholder='Enter category'
-                                    value={product.category}
                                     onChange={e => setProduct(prev => ({ ...prev, category: e.target.value }))}
                                 />
                             </Form.Group>
@@ -156,7 +122,6 @@ const ProductEditScreen = () => {
                                 <Form.Control
                                     type='text'
                                     placeholder='Enter description'
-                                    value={product.description}
                                     onChange={e => setProduct(prev => ({ ...prev, description: e.target.value }))}
                                 />
                             </Form.Group>
@@ -164,7 +129,7 @@ const ProductEditScreen = () => {
                                 type='submit'
                                 variant='primary'
                                 className='my-2'
-                            >Update</Button>
+                            >Create</Button>
                         </Form>
                 }
             </FormContainer>
@@ -172,4 +137,4 @@ const ProductEditScreen = () => {
     )
 }
 
-export default ProductEditScreen
+export default ProductCreateScreen
